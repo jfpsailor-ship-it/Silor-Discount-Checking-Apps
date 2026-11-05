@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ডিসকাউন্ট স্ক্যানার</title>
+<meta name="description" content="বারকোড স্ক্যান করে ডিসকাউন্ট, ভ্যাটসহ দাম ও স্টক দেখুন">
+<meta name="theme-color" content="#14213d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Discount Scan">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true"></span><b>ডিসকাউন্ট স্ক্যানার</b></div>
+  <div id="dataBadge" class="badge" role="status">লোড হচ্ছে…</div>
+</header>
+
+<main>
+  <!-- ============ SCAN ============ -->
+  <section id="view-scan" class="view active">
+    <div id="cam" class="cam">
+      <video id="video" playsinline muted autoplay></video>
+      <div id="frame" class="frame scanning" aria-hidden="true">
+        <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
+        <span class="line"></span>
+      </div>
+      <div class="cam-tools">
+        <button id="btnTorch" class="round" hidden aria-label="ফ্ল্যাশলাইট">🔦</button>
+        <button id="btnZoom" class="round" hidden aria-label="জুম">1×</button>
+      </div>
+      <div id="camMsg" class="cam-msg">
+        <p id="camText">ক্যামেরা চালু করতে নিচের বোতামে চাপ দিন</p>
+        <button id="btnStart" class="primary">📷 স্ক্যান শুরু করুন</button>
+      </div>
+    </div>
+    <form id="manual" class="manual" autocomplete="off">
+      <input id="manualInput" type="search" inputmode="text" enterkeyhint="search" placeholder="বারকোড বা স্টাইল কোড লিখে খুঁজুন" aria-label="বারকোড বা স্টাইল কোড">
+      <button class="primary" type="submit">খুঁজুন</button>
+    </form>
+    <div id="result" class="result" aria-live="polite"></div>
+    <div id="history" class="history"></div>
+  </section>
+
+  <!-- ============ LIST ============ -->
+  <section id="view-list" class="view">
+    <h2>ডিসপ্লে তালিকা</h2>
+    <div id="groupTabs" class="seg"></div>
+    <div class="filters">
+      <input id="listSearch" type="search" placeholder="স্টাইল / কালার / ক্যাটাগরি সার্চ" aria-label="সার্চ">
+      <select id="listCat" aria-label="মাস্টার ক্যাটাগরি"></select>
+    </div>
+    <div id="listSummary" class="muted"></div>
+    <div id="listBody" class="list"></div>
+    <div class="row-actions">
+      <button id="listMore" class="ghost" hidden>আরও দেখুন</button>
+      <button id="listCsv" class="ghost">⬇ CSV ডাউনলোড</button>
+    </div>
+  </section>
+
+  <!-- ============ DATA ============ -->
+  <section id="view-data" class="view">
+    <h2>ডেটা আপডেট ও সেটিংস</h2>
+
+    <div class="card" id="statusCard"></div>
+
+    <div class="card">
+      <h3>১. স্টক ফাইল</h3>
+      <p class="muted">Stock Report (.xlsx) দিন। কস্ট/CPU কলাম ফাইলে আসবে না — শুধু দরকারি তথ্য নেওয়া হবে।</p>
+      <input id="fileStock" type="file" accept=".xlsx,.xls" hidden>
+      <button class="primary" data-pick="fileStock">স্টক ফাইল বাছুন</button>
+      <div id="stockPrev" class="prev"></div>
+    </div>
+
+    <div class="card">
+      <h3>২. ডিসকাউন্ট লিস্ট</h3>
+      <p class="muted">যেমন ৩০% সিলেক্টেড গুডস শিট। স্টাইল+কালার (বা বারকোড) কলাম থাকলেই হবে।</p>
+      <label class="fld">ডিসকাউন্ট %
+        <input id="listPct" type="number" min="1" max="99" step="0.5" value="30" inputmode="decimal">
+      </label>
+      <input id="fileDisc" type="file" accept=".xlsx,.xls" hidden>
+      <button class="primary" data-pick="fileDisc">ডিসকাউন্ট ফাইল বাছুন</button>
+      <div id="discPrev" class="prev"></div>
+      <div id="listsBox"></div>
+    </div>
+
+    <div class="card">
+      <h3>৩. নিয়ম (বছর ও ভ্যাট)</h3>
+      <div class="grid2">
+        <label class="fld">এই বছর ও আগের (A02) পণ্য
+          <input id="ruleYear" type="number" inputmode="numeric" min="2000" max="2100">
+        </label>
+        <label class="fld">তাদের ডিসকাউন্ট %
+          <input id="rulePct" type="number" inputmode="decimal" min="0" max="99" step="0.5">
+        </label>
+        <label class="fld">গার্মেন্টস/অন্যান্য ভ্যাট %
+          <input id="vatGar" type="number" inputmode="decimal" min="0" max="100" step="0.5">
+        </label>
+        <label class="fld">একসেসোরিজ ভ্যাট %
+          <input id="vatAcc" type="number" inputmode="decimal" min="0" max="100" step="0.5">
+        </label>
+      </div>
+      <label class="fld">একসেসোরিজ ধরা হবে যে LABEL গুলোকে (কমা দিয়ে)
+        <input id="accLabels" type="text">
+      </label>
+    </div>
+
+    <div class="card">
+      <h3>৪. প্রয়োগ করুন</h3>
+      <div class="btns">
+        <button id="applyLocal" class="primary">এই ফোনে ব্যবহার করুন</button>
+        <button id="dlStock" class="ghost">⬇ stock.json</button>
+        <button id="dlDisc" class="ghost">⬇ discounts.json</button>
+      </div>
+      <p class="muted small">সবার (সব ডিভাইসের) জন্য আপডেট করতে ডাউনলোড করা ফাইল GitHub-এর <code>data</code> ফোল্ডারে আপলোড করুন (README দেখুন)।</p>
+      <button id="resetLocal" class="link">ফোনে রাখা ফাইল মুছে GitHub ডেটায় ফিরে যান</button>
+    </div>
+
+    <div class="card" id="installCard">
+      <h3>ফোনে অ্যাপ হিসেবে ইনস্টল</h3>
+      <div id="installBody"></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-view="scan" class="on"><span>📷</span>স্ক্যান</button>
+  <button data-view="list"><span>📋</span>তালিকা</button>
+  <button data-view="data"><span>⚙️</span>ডেটা</button>
+</nav>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script src="libs/zxing.min.js"></script>
+<script src="js/parse.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
